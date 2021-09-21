@@ -132,7 +132,7 @@
 
 %hook NCNotificationListView
 
-- (void)touchesBegan:(id)arg1 withEvent:(id)arg2 { // hide deja vu on tap
+- (void)touchesBegan:(id)arg1 withEvent:(id)arg2 { // 
 
 	%orig;
 
@@ -146,7 +146,7 @@
 
 %hook SBLiftToWakeController
 
-- (void)wakeGestureManager:(id)arg1 didUpdateWakeGesture:(long long)arg2 orientation:(int)arg3 { // disable deja vu with raise to wake
+- (void)wakeGestureManager:(id)arg1 didUpdateWakeGesture:(long long)arg2 orientation:(int)arg3 { 
 
 	%orig;
 
