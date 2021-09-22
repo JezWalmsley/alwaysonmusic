@@ -1,6 +1,8 @@
 #import "Tweak.h"
 
+
 %hook CSCoverSheetViewController
+
 
 - (void)viewDidLoad { // add oad
 
@@ -8,26 +10,36 @@
 
 	isActive = NO;
 
-	aodView = [[UIView alloc] initWithFrame:[[self view] bounds]];
-	[aodView setAutoresizingMask:UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight];
+	aodView = [UIView new];
 	[aodView setBackgroundColor:[UIColor blackColor]];
-	[aodView setAlpha:1];
+	[aodView setAlpha:0];
 	[aodView setHidden:YES];
+	aodView.translatesAutoresizingMaskIntoConstraints = NO;
 	[[self view] insertSubview:aodView atIndex:0];
 
 	songTitleLabel = [UILabel new];
+	songTitleLabel.textAlignment = NSTextAlignmentCenter;
 	songTitleLabel.translatesAutoresizingMaskIntoConstraints = NO;
 	[songTitleLabel setBackgroundColor:[UIColor blackColor]];
-	[songTitleLabel setText:@"Very good song here"];
-	[songTitleLabel setHidden:NO];
-	[aodView addSubview:songTitleLabel];
+	[aodView insertSubview:songTitleLabel atIndex:0];
 
 	[NSLayoutConstraint activateConstraints:@[
-            [aodView.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
-			[aodView.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor],
-			[aodView.widthAnchor constraintEqualToConstant:256],
-			[aodView.heightAnchor constraintEqualToConstant:256],
-        ]];
+
+		[aodView.topAnchor constraintEqualToAnchor:self.view.topAnchor],
+		[aodView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
+		[aodView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+		[aodView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+
+	]];
+
+	// establishing superior constraints here :fr:
+
+	[songTitleLabel.bottomAnchor constraintEqualToAnchor : aodView.safeAreaLayoutGuide.bottomAnchor].active = YES;
+	[songTitleLabel.centerXAnchor constraintEqualToAnchor : aodView.centerXAnchor].active = YES;
+	[songTitleLabel.leadingAnchor constraintEqualToAnchor : aodView.leadingAnchor].active = YES;
+	[songTitleLabel.trailingAnchor constraintEqualToAnchor : aodView.trailingAnchor].active = YES;
+
+	// see? prettier :PartySetsuna:
 
 }
 
@@ -49,8 +61,8 @@
 
 	NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
 	[notificationCenter removeObserver:self];
-	[notificationCenter addObserver:self selector:@selector(activateaod) name:@"aodActivate" object:nil];
-	[notificationCenter addObserver:self selector:@selector(deactivateaod) name:@"aodDeactivate" object:nil];
+	[notificationCenter addObserver:self selector:@selector(activateAOD) name:@"aodActivate" object:nil];
+	[notificationCenter addObserver:self selector:@selector(deactivateAOD) name:@"aodDeactivate" object:nil];
 
 	return %orig;
 
@@ -58,21 +70,22 @@
 
 - (void)lockUIFromSource:(int)arg1 withOptions:(id)arg2 { 
 
+
 	%orig;
-	
 	
 	isActive = YES;
 
 	if ([aodView isHidden])
-		[self activateaod];
+		[self activateAOD];
+
 	else
-		[self deactivateaod];
+		[self deactivateAOD];
 
 
 }
 
 %new
-- (void)activateaod { 
+- (void)activateAOD { 
 
 	[aodView setAlpha:1];
 	[aodView setHidden:NO];
@@ -92,10 +105,9 @@
 }
 
 %new
-- (void)deactivateaod { 
+- (void)deactivateAOD { 
 
 	isActive = NO;
-
 	[UIView animateWithDuration:0.3 delay:0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
 		[aodView setAlpha:0];
 	} completion:^(BOOL finished) {
@@ -214,7 +226,7 @@
 
 - (BOOL)_allowsCapabilityLockScreenCameraWithExplanation:(id *)arg1 { // disable camera swipe
 
-    if (isActive)
+	if (isActive)
 		return NO;
 	else
 		return %orig;
@@ -312,13 +324,29 @@
 - (void)setVisibility:(NSNotification *)notification { // hide or unhide the time and date
 
 	if ([notification.name isEqual:@"aodHideElements"]) {
+
 		[UIView animateWithDuration:0.3 delay:0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+
+			[self setAlpha:0];
+
+		} completion:^(BOOL finished) {
+
 			[self setHidden:YES];
-		} completion:nil];
+
+		}];
+
 	} else if ([notification.name isEqual:@"aodUnhideElements"]) {
+
 		[UIView animateWithDuration:0.3 delay:0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+
+			[self setAlpha:1];
+
+		} completion:^(BOOL finished) {
+
 			[self setHidden:NO];
-		} completion:nil];
+
+		}];
+
 	}
 
 }
@@ -445,5 +473,36 @@
 	}
 
 }
+
+%end
+
+
+
+%hook SBMediaController
+
+
+- (void)setNowPlayingInfo:(id)arg1 { // set now playing info
+
+
+	%orig;
+
+	MRMediaRemoteGetNowPlayingInfo(dispatch_get_main_queue(), ^(CFDictionaryRef information) {
+
+		if(information) {
+
+			NSDictionary *dict = (__bridge NSDictionary *)information;
+
+			if(dict)
+
+				// looks like this also pulls up the artist name??? wtf, anyways, it does for me rn	
+
+				if(dict[(__bridge NSString *)kMRMediaRemoteNowPlayingInfoTitle]) songTitleLabel.text = [NSString stringWithFormat:@"%@", [dict objectForKey:(__bridge NSString*)kMRMediaRemoteNowPlayingInfoTitle]];
+
+		}
+
+	});
+
+}
+
 
 %end
