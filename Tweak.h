@@ -1,19 +1,16 @@
 #import <MediaRemote/MediaRemote.h>
+#import "MarqueeLabel.h"
 
 BOOL isActive = NO;
 UIView *aodView = nil;
 UILabel *songTitleLabel = nil;
 UILabel *songArtistLabel = nil;
-int previousLowPowerModeState = 0;
+BOOL playing = NO;
 
 BOOL wasAutoBrightnessEnabled = YES;
-UIImpactFeedbackGenerator* generator = nil;
-NSTimer* inactivityTimer = nil;
 NSTimer* pixelShiftTimer = nil;
-NSTimer* dimTimer = nil;
 BOOL loadedTimeAndDateFrame = NO;
 CGRect originalTimeAndDateFrame;
-float lastBrightness = 0;
 BOOL hasAddedStatusBarObserver = NO;
 
 
@@ -93,4 +90,10 @@ BOOL hasAddedStatusBarObserver = NO;
 @interface SBMediaController : NSObject
 + (id)sharedInstance;
 - (void)setNowPlayingInfo:(id)arg1;
+-(BOOL)isPlaying;
+@end
+
+@interface UILabel ()
+- (void)setMarqueeEnabled:(BOOL)arg1;
+- (void)setMarqueeRunning:(BOOL)arg1;
 @end

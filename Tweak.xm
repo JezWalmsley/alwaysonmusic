@@ -1,5 +1,7 @@
 #import "Tweak.h"
 
+// Huge credits to litten, https://github.com/schneelittchen/Deja-Vu/blob/main/Tweak/DejaVu.xm
+// I just wanted to see this concept https://cdn.discordapp.com/attachments/832190410826186762/889845728623599666/unknown.png come to reality
 
 %hook CSCoverSheetViewController
 
@@ -17,7 +19,7 @@
 	aodView.translatesAutoresizingMaskIntoConstraints = NO;
 	[[self view] insertSubview:aodView atIndex:0];
 
-	songTitleLabel = [UILabel new];
+	songTitleLabel = [MarqueeLabel new];
 	songTitleLabel.textAlignment = NSTextAlignmentCenter;
 	songTitleLabel.translatesAutoresizingMaskIntoConstraints = NO;
 	[songTitleLabel setBackgroundColor:[UIColor blackColor]];
@@ -77,7 +79,6 @@
 
 	if ([aodView isHidden])
 		[self activateAOD];
-
 	else
 		[self deactivateAOD];
 
@@ -87,6 +88,8 @@
 %new
 - (void)activateAOD { 
 
+	NSLog(@"AOD: %@", playing ? @"YES" : @"NO");
+	if (!playing) return;
 	[aodView setAlpha:1];
 	[aodView setHidden:NO];
 	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
@@ -101,6 +104,8 @@
 			[notificationCenter postNotificationName:@"aodHideElements" object:nil];
 		});
 	});
+
+	pixelShiftTimer = [NSTimer scheduledTimerWithTimeInterval:180.0 target:self selector:@selector(initiatePixelShift) userInfo:nil repeats:YES];
 
 }
 
@@ -123,9 +128,18 @@
 	[notificationCenter postNotificationName:@"aodUpdateIdleTimer" object:nil];
 	[notificationCenter postNotificationName:@"aodUnhideElements" object:nil];
 
+	[pixelShiftTimer invalidate];
+	pixelShiftTimer = nil;
+	[notificationCenter postNotificationName:@"aodResetShift" object:nil];
 
 }
 
+%new
+- (void)initiatePixelShift { // send pixel shift notification
+
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"aodPixelShift" object:nil];
+
+}
 
 %end
 
@@ -315,6 +329,10 @@
 	[notificationCenter addObserver:self selector:@selector(setVisibility:) name:@"aodHideElements" object:nil];
 	[notificationCenter addObserver:self selector:@selector(setVisibility:) name:@"aodUnhideElements" object:nil];
 
+	// pixel shift, because we dont want burnin now do we
+
+	[notificationCenter addObserver:self selector:@selector(shift) name:@"aodPixelShift" object:nil];
+	[notificationCenter addObserver:self selector:@selector(resetShift) name:@"aodResetPixelShift" object:nil];
 
 	return %orig;
 
@@ -351,6 +369,30 @@
 
 }
 
+%new
+- (void)shift { // pixel shift
+
+	if (!loadedTimeAndDateFrame) originalTimeAndDateFrame = [self frame];
+	loadedTimeAndDateFrame = YES;
+
+	int direction = arc4random_uniform(2);
+	CGRect newFrame = originalTimeAndDateFrame;
+	
+	if (direction == 0)
+		newFrame.origin.x += arc4random_uniform(15);
+	else if (direction == 1)
+		newFrame.origin.y += arc4random_uniform(15);
+
+	[self setFrame:newFrame];
+	
+}
+
+%new
+- (void)resetShift { // reset frame
+
+	[self setFrame:originalTimeAndDateFrame];
+
+}
 
 %end
 
@@ -503,6 +545,15 @@
 	});
 
 }
+
+-(BOOL)isPlaying {
+
+	playing = %orig;
+
+	return playing;
+
+}
+
 
 
 %end
