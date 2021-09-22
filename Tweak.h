@@ -1,3 +1,5 @@
+#import <MediaRemote/MediaRemote.h>
+
 BOOL isActive = NO;
 UIView *aodView = nil;
 UILabel *songTitleLabel = nil;
@@ -21,8 +23,8 @@ BOOL hasAddedStatusBarObserver = NO;
 @interface SBLockScreenManager : NSObject
 - (BOOL)isLockScreenVisible;
 - (void)setBiometricAutoUnlockingDisabled:(BOOL)arg1 forReason:(id)arg2;
-- (void)activateaod;
-- (void)deactivateaod;
+- (void)activateAOD;
+- (void)deactivateAOD;
 @end
 
 @interface SBProximitySensorManager : NSObject
@@ -39,12 +41,6 @@ BOOL hasAddedStatusBarObserver = NO;
 @interface SBDashBoardIdleTimerProvider : NSObject
 - (void)addDisabledIdleTimerAssertionReason:(id)arg1;
 - (void)removeDisabledIdleTimerAssertionReason:(id)arg1;
-@end
-
-@interface SBMediaController : NSObject
-+ (id)sharedInstance;
-- (BOOL)isPlaying;
-- (BOOL)isPaused;
 @end
 
 @interface DNDModeAssertionService : NSObject
@@ -92,4 +88,9 @@ BOOL hasAddedStatusBarObserver = NO;
 
 @interface CSTeachableMomentsContainerView : UIView
 - (void)setVisibility:(NSNotification *)notification;
+@end
+
+@interface SBMediaController : NSObject
++ (id)sharedInstance;
+- (void)setNowPlayingInfo:(id)arg1;
 @end
